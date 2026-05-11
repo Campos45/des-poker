@@ -1,0 +1,6 @@
+# Pastas ocultas do Godot 4
+.godot/
+# Ficheiros de sistema
+*.translation
+Thumbs.db
+.DS_Store
