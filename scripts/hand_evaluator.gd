@@ -1,26 +1,35 @@
 extends Node
 class_name HandEvaluator
 
-# Tradutor: Converte o nome da carta para um valor numérico para podermos ordenar
 const RANK_VALUES = {
 	"2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "10": 10,
 	"Valete": 11, "Dama": 12, "Rei": 13, "As": 14
 }
 
-# Função estática (pode ser chamada de qualquer lado sem precisarmos de criar um Node)
-static func evaluate_5_card_hand(cards: Array) -> String:
+const HAND_BASE_STATS = {
+	"Royal Flush": {"chips": 100, "mult": 8},
+	"Straight Flush": {"chips": 100, "mult": 8},
+	"Poker": {"chips": 60, "mult": 7},
+	"Full House": {"chips": 40, "mult": 4},
+	"Flush": {"chips": 35, "mult": 4},
+	"Sequência (Straight)": {"chips": 30, "mult": 4},
+	"Trio": {"chips": 30, "mult": 3},
+	"Dois Pares": {"chips": 20, "mult": 2},
+	"Um Par": {"chips": 10, "mult": 2},
+	"Carta Alta": {"chips": 5, "mult": 1}
+}
+
+static func evaluate_5_card_hand(cards: Array) -> Dictionary:
 	var values = []
 	var suits = []
 	
-	# Extrair valores e naipes
 	for card in cards:
 		values.append(RANK_VALUES[card.rank])
 		suits.append(card.suit)
 		
-	# Ordenar os valores por ordem crescente (ex: 2, 4, 10, 11, 14)
 	values.sort()
 	
-	# 1. Verificar se é Flush (todas as cartas do mesmo naipe)
+	# Verificações de Flush e Sequência
 	var is_flush = true
 	var first_suit = suits[0]
 	for s in suits:
@@ -28,46 +37,104 @@ static func evaluate_5_card_hand(cards: Array) -> String:
 			is_flush = false
 			break
 			
-	# 2. Verificar se é Sequência (Straight)
 	var is_straight = true
 	for i in range(1, 5):
 		if values[i] != values[i-1] + 1:
-			# Exceção mágica do Poker: Sequência As, 2, 3, 4, 5
 			if i == 4 and values[4] == 14 and values[0] == 2 and values[1] == 3 and values[2] == 4 and values[3] == 5:
 				is_straight = true
 			else:
 				is_straight = false
 				break
 				
-	# 3. Contar cartas repetidas (para Pares, Trios, Poker)
+	# Contar as repetições para Pares, Trios e Poker
 	var counts = {}
 	for v in values:
-		if counts.has(v):
-			counts[v] += 1
-		else:
-			counts[v] = 1
+		if counts.has(v): counts[v] += 1
+		else: counts[v] = 1
 			
-	var pairs = 0
-	var three_of_a_kind = 0
-	var four_of_a_kind = 0
+	var pair_values = []
+	var trio_value = -1
+	var quad_value = -1
 	
 	for v in counts:
-		if counts[v] == 2: pairs += 1
-		if counts[v] == 3: three_of_a_kind += 1
-		if counts[v] == 4: four_of_a_kind += 1
+		if counts[v] == 2: pair_values.append(v)
+		if counts[v] == 3: trio_value = v
+		if counts[v] == 4: quad_value = v
 
-	# 4. Decidir qual é a mão (Ordem decrescente de importância)
-	if is_straight and is_flush:
-		if values[4] == 14 and values[3] == 13: # Acaba em As e Rei
-			return "Royal Flush"
-		return "Straight Flush"
-		
-	if four_of_a_kind == 1: return "Poker"
-	if three_of_a_kind == 1 and pairs == 1: return "Full House"
-	if is_flush: return "Flush"
-	if is_straight: return "Sequência (Straight)"
-	if three_of_a_kind == 1: return "Trio"
-	if pairs == 2: return "Dois Pares"
-	if pairs == 1: return "Um Par"
+	# Preparar a resposta
+	var hand_name = "Carta Alta"
+	var scoring_cards = []
 	
-	return "Carta Alta"
+	# Determinar a mão e separar APENAS as cartas que pontuam
+	if is_straight and is_flush:
+		if values[4] == 14 and values[3] == 13:
+			hand_name = "Royal Flush"
+		else:
+			hand_name = "Straight Flush"
+		scoring_cards = cards.duplicate() # Pontuam as 5
+		
+	elif quad_value != -1:
+		hand_name = "Poker"
+		for c in cards:
+			if RANK_VALUES[c.rank] == quad_value: scoring_cards.append(c)
+			
+	elif trio_value != -1 and pair_values.size() == 1:
+		hand_name = "Full House"
+		scoring_cards = cards.duplicate() # Pontuam as 5
+		
+	elif is_flush:
+		hand_name = "Flush"
+		scoring_cards = cards.duplicate() # Pontuam as 5
+		
+	elif is_straight:
+		hand_name = "Sequência (Straight)"
+		scoring_cards = cards.duplicate() # Pontuam as 5
+		
+	elif trio_value != -1:
+		hand_name = "Trio"
+		for c in cards:
+			if RANK_VALUES[c.rank] == trio_value: scoring_cards.append(c)
+			
+	elif pair_values.size() == 2:
+		hand_name = "Dois Pares"
+		for c in cards:
+			if RANK_VALUES[c.rank] in pair_values: scoring_cards.append(c)
+			
+	elif pair_values.size() == 1:
+		hand_name = "Um Par"
+		for c in cards:
+			if RANK_VALUES[c.rank] in pair_values: scoring_cards.append(c)
+			
+	else:
+		hand_name = "Carta Alta"
+		var highest_val = values[4] # O último da lista ordenada é o mais alto
+		for c in cards:
+			if RANK_VALUES[c.rank] == highest_val:
+				scoring_cards.append(c)
+				break # Adiciona só a carta mais alta
+				
+	# Devolvemos a mão feita e as cartas responsáveis por ela
+	return {"name": hand_name, "scoring_cards": scoring_cards}
+
+# A nossa matemática agora só recebe o dicionário gerado em cima
+static func calculate_score(hand_data: Dictionary) -> Dictionary:
+	var hand_name = hand_data["name"]
+	var scoring_cards = hand_data["scoring_cards"]
+	
+	var stats = HAND_BASE_STATS[hand_name]
+	var total_chips = stats["chips"]
+	var total_mult = stats["mult"]
+	
+	# Só passamos pelas cartas que de facto pontuam!
+	for card in scoring_cards:
+		var card_val = RANK_VALUES[card.rank]
+		
+		if card_val > 10 and card_val < 14: total_chips += 10
+		elif card_val == 14: total_chips += 11
+		else: total_chips += card_val
+			
+		if card.is_special:
+			total_mult += 1
+			
+	var final_score = total_chips * total_mult
+	return {"chips": total_chips, "mult": total_mult, "total": final_score}

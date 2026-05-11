@@ -23,22 +23,33 @@ func _ready():
 	create_deck()
 	# print_deck_to_console() # Podes colocar um '#' antes desta linha para esconder o baralho todo da consola e não fazer spam
 	
-	# --- TESTE DO SPRINT 2 ---
-	print("\n--- TESTE DE AVALIAÇÃO DE MÃO ---")
-	# Tirar as primeiras 5 cartas do baralho
+	# --- TESTE DO SPRINT 3 ---
+	print("\n--- TESTE DE PONTUAÇÃO ---")
 	var my_hand = []
 	for i in range(5):
 		my_hand.append(deck[i])
-	
-	# Imprimir as 5 cartas que saíram
-	var hand_text = "Mão atual: "
+		
+	var hand_text = "Mão jogada: "
 	for card in my_hand:
-		hand_text += "[" + card.rank + " de " + card.suit + "] "
+		var special_mark = "⭐" if card.is_special else ""
+		hand_text += "[" + card.rank + " " + card.suit + special_mark + "] "
 	print(hand_text)
 	
-	# Chamar o nosso Avaliador Mágico
-	var resultado = HandEvaluator.evaluate_5_card_hand(my_hand)
-	print("Resultado detetado: >>> ", resultado, " <<<")
+	# 1. Descobrir qual é a mão e as cartas que pontuam
+	var hand_data = HandEvaluator.evaluate_5_card_hand(my_hand)
+	print("Mão detetada: ", hand_data["name"])
+	
+	# Imprimir quais foram as cartas usadas para os pontos!
+	var scoring_text = "Cartas que contaram: "
+	for card in hand_data["scoring_cards"]:
+		var special_mark = "⭐" if card.is_special else ""
+		scoring_text += "[" + card.rank + special_mark + "] "
+	print(scoring_text)
+	
+	# 2. Calcular os pontos
+	var score_data = HandEvaluator.calculate_score(hand_data)
+	print("Matemática: ", score_data["chips"], " Fichas X ", score_data["mult"], " Mult")
+	print("PONTUAÇÃO FINAL DA RONDA: ", score_data["total"], " Pontos!")
 
 func create_deck():
 	deck.clear() # Limpa baralhos anteriores
