@@ -1,5 +1,6 @@
 extends Node
 
+
 # Definimos as propriedades que uma Carta vai ter
 class Card:
 	var suit: String # Naipe (Copas, Espadas, etc)
@@ -18,10 +19,26 @@ var ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "Valete", "Dama", "Re
 var deck = []
 
 func _ready():
-	# O _ready() corre assim que o jogo começa.
-	randomize() # Garante que a aleatoriedade é diferente em cada jogo
+	randomize()
 	create_deck()
-	print_deck_to_console()
+	# print_deck_to_console() # Podes colocar um '#' antes desta linha para esconder o baralho todo da consola e não fazer spam
+	
+	# --- TESTE DO SPRINT 2 ---
+	print("\n--- TESTE DE AVALIAÇÃO DE MÃO ---")
+	# Tirar as primeiras 5 cartas do baralho
+	var my_hand = []
+	for i in range(5):
+		my_hand.append(deck[i])
+	
+	# Imprimir as 5 cartas que saíram
+	var hand_text = "Mão atual: "
+	for card in my_hand:
+		hand_text += "[" + card.rank + " de " + card.suit + "] "
+	print(hand_text)
+	
+	# Chamar o nosso Avaliador Mágico
+	var resultado = HandEvaluator.evaluate_5_card_hand(my_hand)
+	print("Resultado detetado: >>> ", resultado, " <<<")
 
 func create_deck():
 	deck.clear() # Limpa baralhos anteriores
