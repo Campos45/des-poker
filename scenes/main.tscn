@@ -36,4 +36,12 @@ offset_right = 100.0
 offset_bottom = 50.0
 grow_horizontal = 2
 
+[node name="NextRoundButton" type="Button" parent="." unique_id=1914639295]
+offset_left = 907.0
+offset_top = 575.0
+offset_right = 1033.0
+offset_bottom = 606.0
+text = "Próxima Ronda"
+
 [connection signal="pressed" from="PlayButton" to="." method="_on_play_button_pressed"]
+[connection signal="pressed" from="NextRoundButton" to="." method="_on_next_round_button_pressed"]

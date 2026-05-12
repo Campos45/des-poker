@@ -8,29 +8,37 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 171.0
+offset_top = -12.0
+offset_right = 171.0
+offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_4xisq")
 
 [node name="ColorRect" type="ColorRect" parent="." unique_id=915354457]
 layout_mode = 0
-offset_right = 100.0
-offset_bottom = 150.0
+offset_left = 4.0
+offset_top = 491.0
+offset_right = 104.0
+offset_bottom = 641.0
 mouse_filter = 2
 
 [node name="Label" type="Label" parent="." unique_id=1465066246]
 layout_mode = 0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = 72.0
-offset_bottom = 33.0
+offset_left = 20.0
+offset_top = 531.0
+offset_right = 82.0
+offset_bottom = 554.0
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "A Copas"
 
 [node name="Button" type="Button" parent="." unique_id=1488830217]
 layout_mode = 0
-offset_right = 100.0
-offset_bottom = 150.0
+offset_left = 4.0
+offset_top = 491.0
+offset_right = 104.0
+offset_bottom = 641.0
 flat = true
 
 [connection signal="pressed" from="Button" to="." method="_on_button_pressed"]
