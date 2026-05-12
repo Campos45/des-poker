@@ -142,3 +142,50 @@ static func calculate_score(hand_data: Dictionary) -> Dictionary:
 			
 	var final_score = total_chips * total_mult
 	return {"chips": total_chips, "mult": total_mult, "total": final_score}
+
+
+# --- MOTOR DE INTELIGÊNCIA ARTIFICIAL (SEGUNDA MÃO) ---
+
+# 1. Função que o jogo vai chamar para descobrir a melhor mão
+static func find_best_hand(available_cards: Array) -> Dictionary:
+	# Se sobrarem 5 ou menos cartas, não há muito a escolher, joga essas!
+	if available_cards.size() <= 5:
+		var eval = evaluate_5_card_hand(available_cards)
+		var score = calculate_score(eval)
+		eval["score_data"] = score
+		return eval
+
+	# Gera todas as combinações possíveis de 5 cartas
+	var combos = get_combinations(available_cards, 5)
+	var best_hand = {}
+	var highest_score = -1
+
+	# Testa uma por uma!
+	for combo in combos:
+		var eval = evaluate_5_card_hand(combo)
+		var score = calculate_score(eval)
+		
+		# Se esta combinação der mais pontos que a anterior, passa a ser a favorita
+		if score["total"] > highest_score:
+			highest_score = score["total"]
+			eval["score_data"] = score
+			best_hand = eval
+
+	return best_hand
+
+# 2. Algoritmo para iniciar a geração de combinações
+static func get_combinations(arr: Array, k: int) -> Array:
+	var result = []
+	_combine(arr, k, 0, [], result)
+	return result
+
+# 3. A Matemática Recursiva (O motor que faz as misturas)
+static func _combine(arr: Array, k: int, start: int, current: Array, result: Array):
+	if current.size() == k:
+		result.append(current.duplicate())
+		return
+	for i in range(start, arr.size()):
+		current.append(arr[i])
+		_combine(arr, k, i + 1, current, result)
+		current.pop_back()
+		

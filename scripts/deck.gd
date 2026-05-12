@@ -53,21 +53,29 @@ func spawn_game_table():
 		player_display.add_child(new_card_visual)
 		new_card_visual.setup_card(card_data)
 
-# Atualizar o botão para ler as duas prateleiras e destruir as cartas usadas
 func _on_play_button_pressed():
 	var selected_cards = []
+	var remaining_cards = [] # Cartas que vão para a Segunda Mão
 	
-	# Procurar cartas selecionadas na Mão do Jogador
+	# 1. Analisar a prateleira do Jogador
 	for card_visual in player_display.get_children():
 		if card_visual.is_selected:
 			selected_cards.append(card_visual.card_data)
+			card_visual.queue_free() # Destrói as que jogaste!
+		else:
+			# As que NÃO selecionaste, ficam para a Segunda Mão
+			remaining_cards.append(card_visual.card_data)
 			
-	# Procurar cartas selecionadas nas Comunitárias
+	# 2. Analisar a prateleira da Mesa (Comunitárias)
 	for card_visual in community_display.get_children():
 		if card_visual.is_selected:
 			selected_cards.append(card_visual.card_data)
+			card_visual.toggle_selection() # Baixa-as (mas não as destrói)
 			
-	# As regras mantêm-se: máximo 5 cartas no total
+		# Regra de Ouro: As comunitárias estão SEMPRE disponíveis para a 2ª Mão!
+		remaining_cards.append(card_visual.card_data)
+			
+	# Verificações de segurança
 	if selected_cards.size() > 5:
 		score_label.text = "Aviso: Seleciona no máximo 5 cartas combinadas!"
 		return
@@ -75,23 +83,24 @@ func _on_play_button_pressed():
 		score_label.text = "Aviso: Seleciona pelo menos 1 carta!"
 		return
 		
-	# 1. Calcular a Primeira Mão
-	var hand_data = HandEvaluator.evaluate_5_card_hand(selected_cards)
-	var score_data = HandEvaluator.calculate_score(hand_data)
+	# --- CÁLCULO DA PRIMEIRA MÃO (A TUA JOGADA) ---
+	var hand1_data = HandEvaluator.evaluate_5_card_hand(selected_cards)
+	var score1_data = HandEvaluator.calculate_score(hand1_data)
 	
-	score_label.text = "Primeira Mão: " + hand_data["name"] + "\n"
-	score_label.text += str(score_data["chips"]) + " Fichas X " + str(score_data["mult"]) + " Mult\n"
-	score_label.text += "Total: " + str(score_data["total"]) + " Pontos!"
+	var final_text = "Primeira Mão: " + hand1_data["name"] + "\n"
+	final_text += str(score1_data["chips"]) + " Fichas X " + str(score1_data["mult"]) + " Mult = " + str(score1_data["total"]) + "\n\n"
 	
-	# 2. DESTRUIR AS CARTAS USADAS DA MÃO DO JOGADOR
-	for card_visual in player_display.get_children():
-		if card_visual.is_selected:
-			card_visual.queue_free() # Magia do Godot: Elimina o objeto do jogo!
-			
-	# 3. BAIXAR AS CARTAS COMUNITÁRIAS USADAS (Para não ficarem levantadas)
-	for card_visual in community_display.get_children():
-		if card_visual.is_selected:
-			card_visual.toggle_selection()
-			
-	# 4. Desativar o botão para não podermos clicar outra vez nesta ronda
+	# --- CÁLCULO DA SEGUNDA MÃO (A INTELIGÊNCIA ARTIFICIAL) ---
+	var hand2_data = HandEvaluator.find_best_hand(remaining_cards)
+	var score2_data = hand2_data["score_data"]
+	
+	final_text += "Segunda Mão (Auto): " + hand2_data["name"] + "\n"
+	final_text += str(score2_data["chips"]) + " Fichas X " + str(score2_data["mult"]) + " Mult = " + str(score2_data["total"]) + "\n\n"
+	
+	# --- GRANDE TOTAL ---
+	var grand_total = score1_data["total"] + score2_data["total"]
+	final_text += "GRANDE TOTAL DA RONDA: " + str(grand_total) + " Pontos!"
+	
+	score_label.text = final_text
+	
 	play_button.disabled = true
