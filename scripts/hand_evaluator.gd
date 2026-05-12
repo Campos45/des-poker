@@ -18,7 +18,6 @@ const HAND_BASE_STATS = {
 	"Um Par": {"chips": 10, "mult": 2},
 	"Carta Alta": {"chips": 5, "mult": 1}
 }
-
 static func evaluate_5_card_hand(cards: Array) -> Dictionary:
 	var values = []
 	var suits = []
@@ -28,25 +27,30 @@ static func evaluate_5_card_hand(cards: Array) -> Dictionary:
 		suits.append(card.suit)
 		
 	values.sort()
+	var num_cards = cards.size() # Descobre quantas cartas foram jogadas!
 	
-	# Verificações de Flush e Sequência
-	var is_flush = true
-	var first_suit = suits[0]
-	for s in suits:
-		if s != first_suit:
-			is_flush = false
-			break
-			
-	var is_straight = true
-	for i in range(1, 5):
-		if values[i] != values[i-1] + 1:
-			if i == 4 and values[4] == 14 and values[0] == 2 and values[1] == 3 and values[2] == 4 and values[3] == 5:
-				is_straight = true
-			else:
-				is_straight = false
+	# Verificações de Flush e Sequência (SÓ OCORREM SE HOUVER EXATAMENTE 5 CARTAS)
+	var is_flush = false
+	var is_straight = false
+	
+	if num_cards == 5:
+		is_flush = true
+		var first_suit = suits[0]
+		for s in suits:
+			if s != first_suit:
+				is_flush = false
 				break
 				
-	# Contar as repetições para Pares, Trios e Poker
+		is_straight = true
+		for i in range(1, 5):
+			if values[i] != values[i-1] + 1:
+				if i == 4 and values[4] == 14 and values[0] == 2 and values[1] == 3 and values[2] == 4 and values[3] == 5:
+					is_straight = true
+				else:
+					is_straight = false
+					break
+			
+	# Contar as repetições para Pares, Trios e Poker (Funciona para qualquer número de cartas)
 	var counts = {}
 	for v in values:
 		if counts.has(v): counts[v] += 1
@@ -71,7 +75,7 @@ static func evaluate_5_card_hand(cards: Array) -> Dictionary:
 			hand_name = "Royal Flush"
 		else:
 			hand_name = "Straight Flush"
-		scoring_cards = cards.duplicate() # Pontuam as 5
+		scoring_cards = cards.duplicate()
 		
 	elif quad_value != -1:
 		hand_name = "Poker"
@@ -80,22 +84,22 @@ static func evaluate_5_card_hand(cards: Array) -> Dictionary:
 			
 	elif trio_value != -1 and pair_values.size() == 1:
 		hand_name = "Full House"
-		scoring_cards = cards.duplicate() # Pontuam as 5
+		scoring_cards = cards.duplicate()
 		
 	elif is_flush:
 		hand_name = "Flush"
-		scoring_cards = cards.duplicate() # Pontuam as 5
+		scoring_cards = cards.duplicate()
 		
 	elif is_straight:
 		hand_name = "Sequência (Straight)"
-		scoring_cards = cards.duplicate() # Pontuam as 5
+		scoring_cards = cards.duplicate()
 		
 	elif trio_value != -1:
 		hand_name = "Trio"
 		for c in cards:
 			if RANK_VALUES[c.rank] == trio_value: scoring_cards.append(c)
 			
-	elif pair_values.size() == 2:
+	elif pair_values.size() >= 2:
 		hand_name = "Dois Pares"
 		for c in cards:
 			if RANK_VALUES[c.rank] in pair_values: scoring_cards.append(c)
@@ -107,15 +111,15 @@ static func evaluate_5_card_hand(cards: Array) -> Dictionary:
 			
 	else:
 		hand_name = "Carta Alta"
-		var highest_val = values[4] # O último da lista ordenada é o mais alto
-		for c in cards:
-			if RANK_VALUES[c.rank] == highest_val:
-				scoring_cards.append(c)
-				break # Adiciona só a carta mais alta
-				
-	# Devolvemos a mão feita e as cartas responsáveis por ela
+		if num_cards > 0:
+			var highest_val = values[num_cards - 1] # Vai buscar a última carta (a maior) independentemente do tamanho da lista
+			for c in cards:
+				if RANK_VALUES[c.rank] == highest_val:
+					scoring_cards.append(c)
+					break 
+					
 	return {"name": hand_name, "scoring_cards": scoring_cards}
-
+	
 # A nossa matemática agora só recebe o dicionário gerado em cima
 static func calculate_score(hand_data: Dictionary) -> Dictionary:
 	var hand_name = hand_data["name"]

@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://c7v5e5m8xqcrv" path="res://scripts/card_visual.gd" id="1_4xisq"]
 
 [node name="CardVisual" type="Control" unique_id=1325700549]
+custom_minimum_size = Vector2(100, 150)
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -15,12 +16,21 @@ script = ExtResource("1_4xisq")
 layout_mode = 0
 offset_right = 100.0
 offset_bottom = 150.0
+mouse_filter = 2
 
 [node name="Label" type="Label" parent="." unique_id=1465066246]
 layout_mode = 0
-offset_left = 16.0
-offset_top = 50.0
-offset_right = 78.0
-offset_bottom = 73.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 72.0
+offset_bottom = 33.0
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "A Copas"
+
+[node name="Button" type="Button" parent="." unique_id=1488830217]
+layout_mode = 0
+offset_right = 100.0
+offset_bottom = 150.0
+flat = true
+
+[connection signal="pressed" from="Button" to="." method="_on_button_pressed"]
