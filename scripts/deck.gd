@@ -53,7 +53,7 @@ func spawn_game_table():
 		player_display.add_child(new_card_visual)
 		new_card_visual.setup_card(card_data)
 
-# Atualizar o botão para ler as duas prateleiras
+# Atualizar o botão para ler as duas prateleiras e destruir as cartas usadas
 func _on_play_button_pressed():
 	var selected_cards = []
 	
@@ -75,10 +75,23 @@ func _on_play_button_pressed():
 		score_label.text = "Aviso: Seleciona pelo menos 1 carta!"
 		return
 		
-	# Enviar para o avaliador
+	# 1. Calcular a Primeira Mão
 	var hand_data = HandEvaluator.evaluate_5_card_hand(selected_cards)
 	var score_data = HandEvaluator.calculate_score(hand_data)
 	
 	score_label.text = "Primeira Mão: " + hand_data["name"] + "\n"
 	score_label.text += str(score_data["chips"]) + " Fichas X " + str(score_data["mult"]) + " Mult\n"
 	score_label.text += "Total: " + str(score_data["total"]) + " Pontos!"
+	
+	# 2. DESTRUIR AS CARTAS USADAS DA MÃO DO JOGADOR
+	for card_visual in player_display.get_children():
+		if card_visual.is_selected:
+			card_visual.queue_free() # Magia do Godot: Elimina o objeto do jogo!
+			
+	# 3. BAIXAR AS CARTAS COMUNITÁRIAS USADAS (Para não ficarem levantadas)
+	for card_visual in community_display.get_children():
+		if card_visual.is_selected:
+			card_visual.toggle_selection()
+			
+	# 4. Desativar o botão para não podermos clicar outra vez nesta ronda
+	play_button.disabled = true
