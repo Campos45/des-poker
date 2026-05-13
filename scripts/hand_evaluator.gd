@@ -130,7 +130,7 @@ static func evaluate_5_card_hand(cards: Array) -> Dictionary:
 	return {"name": hand_name, "scoring_cards": scoring_cards, "all_played_cards": cards}
 
 # Adicionámos "context" para a função saber o dinheiro e a ronda
-static func calculate_score(hand_data: Dictionary, context: Dictionary = {"bank": 0, "round": 1}) -> Dictionary:
+static func calculate_score(hand_data: Dictionary, context: Dictionary = {"bank": 0, "round": 1, "community": []}) -> Dictionary:
 	var hand_name = hand_data["name"]
 	var scoring_cards = hand_data["scoring_cards"]
 	var all_played_cards = hand_data["all_played_cards"]
@@ -146,8 +146,7 @@ static func calculate_score(hand_data: Dictionary, context: Dictionary = {"bank"
 	var red_cards_count = 0
 	var money_earned = 0
 	var cards_to_destroy = []
-	
-	# Flag para sabermos se o Gato Preto está na jogada
+	var cards_to_create = 0 # NOVA: Quantas cartas novas vamos gerar?
 	var has_black_cat = false
 	
 	for c in all_played_cards:
@@ -169,58 +168,64 @@ static func calculate_score(hand_data: Dictionary, context: Dictionary = {"bank"
 		if card.is_special:
 			total_mult += 1 
 			match card.special_type:
-				"Fichas Pesadas":
-					total_chips += 30
-				"Estrela Multiplicadora":
-					total_mult += 4 
-				"O Cilindro Par":
-					total_chips += (5 * even_cards_count)
-				"A Sinergia":
-					total_chips += (10 * red_cards_count)
+				"Fichas Pesadas": total_chips += 30
+				"Estrela Multiplicadora": total_mult += 4 
+				"O Cilindro Par": total_chips += (5 * even_cards_count)
+				"A Sinergia": total_chips += (10 * red_cards_count)
 				"Barris da Taverna":
 					total_mult += 15
 					total_chips -= 10
 				"A Solitária":
-					if all_played_cards.size() == 1:
-						total_chips += 100
-				"Dividendo Fixo":
-					money_earned += 1
+					if all_played_cards.size() == 1: total_chips += 100
+				"Dividendo Fixo": money_earned += 1
 				"A Mealheiro":
 					money_earned += numeric_value
 					cards_to_destroy.append(card)
-				# NOVAS CARTAS:
 				"Fundo de Emergência":
-					if context["bank"] < 2:
-						total_chips += 20
-				"Veterana de Serviço":
-					total_chips += (5 * context["round"])
+					if context["bank"] < 2: total_chips += 20
+				"Veterana de Serviço": total_chips += (5 * context["round"])
 				"Overclock":
-					total_chips += numeric_value # Adiciona o valor uma 2ª vez (dobra)
-					if randf() <= 0.20: # 20% de probabilidade de destruir
-						cards_to_destroy.append(card)
-				"Gato Preto":
-					has_black_cat = true
+					total_chips += numeric_value 
+					if randf() <= 0.20: cards_to_destroy.append(card)
+				"Gato Preto": has_black_cat = true
+				
+				# --- AS NOVAS CARTAS ---
+				"Imposto de Retenção":
+					total_mult = max(1, total_mult - 1) # Impede que o multiplicador vá abaixo de 1
+					money_earned += 3
+				"Blue Chip":
+					if context["bank"] >= 2:
+						money_earned -= 2 # Gasta 2 moedas
+						total_mult *= 3   # Triplica!
+				"Sensor BLE":
+					var matches = 0
+					# Lê as cartas da mesa comunitária
+					if context.has("community"):
+						for comm_card in context["community"]:
+							if comm_card.suit == card.suit:
+								matches += 1
+					total_mult += matches
+				"Colheita Farta":
+					if hand_name == "Full House":
+						money_earned += 3
+						cards_to_create += 2 # Dá ordem para gerar 2 cartas!
 	
-	if total_chips < 0:
-		total_chips = 0
-		
+	if total_chips < 0: total_chips = 0
 	var final_score = total_chips * total_mult
 	
-	# O JULGAMENTO DO GATO PRETO (Aplica-se ao total no fim de todas as contas)
 	if has_black_cat:
-		if randf() <= 0.50:
-			final_score *= 2 # Sorte! Dobra tudo!
-		else:
-			final_score /= 2 # Azar! Corta a meio. (A divisão arredonda para inteiro automaticamente em GDScript se forem int, mas por segurança mantemos assim)
+		if randf() <= 0.50: final_score *= 2 
+		else: final_score /= 2 
 	
+	# Retornamos também as "cards_to_create"
 	return {
 		"chips": total_chips, 
 		"mult": total_mult, 
 		"total": int(final_score), 
 		"money": money_earned, 
-		"destroy": cards_to_destroy
+		"destroy": cards_to_destroy,
+		"create": cards_to_create 
 	}
-	
 	
 static func level_up_hand(hand_name: String):
 	if hand_levels.has(hand_name):

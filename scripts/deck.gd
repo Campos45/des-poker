@@ -41,7 +41,13 @@ func _ready():
 # Cria o Baralho Permanente do Jogador com as novas cartas Especiais
 func generate_master_player_deck():
 	master_player_deck.clear()
-	var math_specials = ["Fichas Pesadas", "Estrela Multiplicadora", "O Cilindro Par", "A Sinergia", "Barris da Taverna", "A Solitária", "Dividendo Fixo", "A Mealheiro", "Fundo de Emergência", "Veterana de Serviço", "Overclock", "Gato Preto"]
+	var math_specials = [
+		"Fichas Pesadas", "Estrela Multiplicadora", "O Cilindro Par", "A Sinergia", 
+		"Barris da Taverna", "A Solitária", "Dividendo Fixo", "A Mealheiro", 
+		"Fundo de Emergência", "Veterana de Serviço", "Overclock", "Gato Preto",
+		"Imposto de Retenção", "Blue Chip", "Sensor BLE", "Colheita Farta"
+	]
+	
 	
 	for suit in suits:
 		for rank in ranks:
@@ -113,8 +119,8 @@ func _on_play_button_pressed():
 		score_label.text = "Aviso: Seleciona pelo menos 1 carta!"
 		return
 		
-	# O pacote com as informações vitais do jogo neste momento
-	var game_context = {"bank": global_bank, "round": current_round}
+	# O pacote com as informações vitais do jogo
+	var game_context = {"bank": global_bank, "round": current_round, "community": current_community_deck}
 	
 	var hand1_data = HandEvaluator.evaluate_5_card_hand(selected_cards)
 	var score1_data = HandEvaluator.calculate_score(hand1_data, game_context) 
@@ -153,6 +159,28 @@ func _on_play_button_pressed():
 				final_text += "🔥 " + bad_card.rank + " de " + bad_card.suit + " (" + bad_card.special_type + ") foi DESTRUÍDA para sempre!\n"
 				break # Remove apenas a primeira cópia que encontrar
 	
+	# ... (código da Destruição Permamente que já lá tens) ...
+	
+	# 3. Executar a Criação de Cartas ("Colheita Farta")
+	var total_cards_to_create = score1_data.get("create", 0) + score2_data.get("create", 0)
+	var math_specials = [
+		"Fichas Pesadas", "Estrela Multiplicadora", "O Cilindro Par", "A Sinergia", 
+		"Barris da Taverna", "A Solitária", "Dividendo Fixo", "A Mealheiro", 
+		"Fundo de Emergência", "Veterana de Serviço", "Overclock", "Gato Preto",
+		"Imposto de Retenção", "Blue Chip", "Sensor BLE", "Colheita Farta"
+	]
+	
+	if total_cards_to_create > 0:
+		for i in range(total_cards_to_create):
+			var random_suit = suits[randi() % suits.size()]
+			var random_rank = ranks[randi() % ranks.size()]
+			var random_type = math_specials[randi() % math_specials.size()]
+			
+			var new_bonus_card = Card.new(random_suit, random_rank, true, random_type)
+			master_player_deck.append(new_bonus_card) # Injetadas diretamente no teu baralho!
+		
+		final_text += "🌱 A Colheita Farta gerou " + str(total_cards_to_create) + " novas Cartas Especiais para o teu baralho!\n"
+
 	score_label.text = final_text
 	
 	play_button.hide()
