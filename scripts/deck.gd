@@ -28,7 +28,9 @@ var current_community_deck = []
 @onready var next_round_button = $NextRoundButton
 @onready var bank_label = $BankLabel 
 
-var global_bank = 0 # Adiciona a tua conta bancária!
+var global_bank = 0 
+var current_round = 1 
+
 
 func _ready():
 	randomize()
@@ -39,7 +41,7 @@ func _ready():
 # Cria o Baralho Permanente do Jogador com as novas cartas Especiais
 func generate_master_player_deck():
 	master_player_deck.clear()
-	var math_specials = ["Fichas Pesadas", "Estrela Multiplicadora", "O Cilindro Par", "A Sinergia", "Barris da Taverna", "A Solitária", "Dividendo Fixo", "A Mealheiro"]
+	var math_specials = ["Fichas Pesadas", "Estrela Multiplicadora", "O Cilindro Par", "A Sinergia", "Barris da Taverna", "A Solitária", "Dividendo Fixo", "A Mealheiro", "Fundo de Emergência", "Veterana de Serviço", "Overclock", "Gato Preto"]
 	
 	for suit in suits:
 		for rank in ranks:
@@ -111,9 +113,12 @@ func _on_play_button_pressed():
 		score_label.text = "Aviso: Seleciona pelo menos 1 carta!"
 		return
 		
-	# Avalia a 1ª Mão
+	# O pacote com as informações vitais do jogo neste momento
+	var game_context = {"bank": global_bank, "round": current_round}
+	
 	var hand1_data = HandEvaluator.evaluate_5_card_hand(selected_cards)
-	var score1_data = HandEvaluator.calculate_score(hand1_data)
+	var score1_data = HandEvaluator.calculate_score(hand1_data, game_context) 
+	
 	
 	var final_text = "Primeira Mão: " + hand1_data["name"] + " (Nv " + str(HandEvaluator.hand_levels[hand1_data["name"]]) + ")\n"
 	final_text += str(score1_data["chips"]) + " Fichas X " + str(score1_data["mult"]) + " Mult = " + str(score1_data["total"]) + "\n\n"
@@ -166,4 +171,5 @@ func _on_next_round_button_pressed():
 	next_round_button.hide()
 	play_button.show()
 	
+	current_round += 1 # Adiciona isto para as Veteranas de Serviço ficarem mais fortes!
 	start_new_round()

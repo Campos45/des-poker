@@ -16,7 +16,11 @@ const SPECIAL_DESCRIPTIONS = {
 	"Barris da Taverna": "Fica Bêbada: dá +15 de Mult mas debita -10 Fichas.",
 	"A Solitária": "Dá +100 Fichas se for a ÚNICA carta a ser submetida na jogada.",
 	"Dividendo Fixo": "Gera +1 Moeda para a tua Pontuação Total assim que pontuar.",
-	"A Mealheiro": "Destrói-se para sempre ao ser jogada, mas deposita o seu valor em Moedas."
+	"A Mealheiro": "Destrói-se para sempre ao ser jogada, mas deposita o seu valor em Moedas.",
+	"Fundo de Emergência": "Se o teu Banco estiver abaixo de 2, dá +20 Fichas.",
+	"Veterana de Serviço": "+5 Fichas por cada ronda passada desde que o jogo começou.",
+	"Overclock": "Dobra o seu próprio valor de Fichas, mas tem 20% de chance de ser DESTRUÍDA.",
+	"Gato Preto": "50% de probabilidade de dobrar os pontos totais da mão; 50% de os dividir a meio."
 }
 
 func setup_card(data):

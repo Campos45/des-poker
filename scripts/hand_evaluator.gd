@@ -129,7 +129,8 @@ static func evaluate_5_card_hand(cards: Array) -> Dictionary:
 	# Retornamos a mão, as cartas que pontuam, e todas as que foram jogadas
 	return {"name": hand_name, "scoring_cards": scoring_cards, "all_played_cards": cards}
 
-static func calculate_score(hand_data: Dictionary) -> Dictionary:
+# Adicionámos "context" para a função saber o dinheiro e a ronda
+static func calculate_score(hand_data: Dictionary, context: Dictionary = {"bank": 0, "round": 1}) -> Dictionary:
 	var hand_name = hand_data["name"]
 	var scoring_cards = hand_data["scoring_cards"]
 	var all_played_cards = hand_data["all_played_cards"]
@@ -143,10 +144,11 @@ static func calculate_score(hand_data: Dictionary) -> Dictionary:
 	
 	var even_cards_count = 0
 	var red_cards_count = 0
-	
-	# --- NOVO: Variáveis de Efeitos Secundários (Economia/Destruição) ---
 	var money_earned = 0
 	var cards_to_destroy = []
+	
+	# Flag para sabermos se o Gato Preto está na jogada
+	var has_black_cat = false
 	
 	for c in all_played_cards:
 		var val = RANK_VALUES[c.rank]
@@ -159,7 +161,6 @@ static func calculate_score(hand_data: Dictionary) -> Dictionary:
 		var card_val = RANK_VALUES[card.rank]
 		var numeric_value = card_val
 		
-		# Calcular o valor real em Fichas/Moedas (Figuras valem 10, Ás 11)
 		if card_val > 10 and card_val < 14: numeric_value = 10
 		elif card_val == 14: numeric_value = 11
 		
@@ -180,38 +181,55 @@ static func calculate_score(hand_data: Dictionary) -> Dictionary:
 					total_mult += 15
 					total_chips -= 10
 				"A Solitária":
-					# Só ativa se o jogador tiver enviado exatamente UMA carta na jogada
 					if all_played_cards.size() == 1:
 						total_chips += 100
 				"Dividendo Fixo":
 					money_earned += 1
 				"A Mealheiro":
 					money_earned += numeric_value
-					cards_to_destroy.append(card) # Marca a carta para ser apagada do jogo!
+					cards_to_destroy.append(card)
+				# NOVAS CARTAS:
+				"Fundo de Emergência":
+					if context["bank"] < 2:
+						total_chips += 20
+				"Veterana de Serviço":
+					total_chips += (5 * context["round"])
+				"Overclock":
+					total_chips += numeric_value # Adiciona o valor uma 2ª vez (dobra)
+					if randf() <= 0.20: # 20% de probabilidade de destruir
+						cards_to_destroy.append(card)
+				"Gato Preto":
+					has_black_cat = true
 	
-	# Previne que uma carta má deixe as tuas fichas base negativas
 	if total_chips < 0:
 		total_chips = 0
 		
 	var final_score = total_chips * total_mult
 	
-	# O Dicionário de resposta agora leva mais informação vital
+	# O JULGAMENTO DO GATO PRETO (Aplica-se ao total no fim de todas as contas)
+	if has_black_cat:
+		if randf() <= 0.50:
+			final_score *= 2 # Sorte! Dobra tudo!
+		else:
+			final_score /= 2 # Azar! Corta a meio. (A divisão arredonda para inteiro automaticamente em GDScript se forem int, mas por segurança mantemos assim)
+	
 	return {
 		"chips": total_chips, 
 		"mult": total_mult, 
-		"total": final_score, 
+		"total": int(final_score), 
 		"money": money_earned, 
 		"destroy": cards_to_destroy
 	}
-
+	
+	
 static func level_up_hand(hand_name: String):
 	if hand_levels.has(hand_name):
 		hand_levels[hand_name] += 1
 
-static func find_best_hand(available_cards: Array) -> Dictionary:
+static func find_best_hand(available_cards: Array, context: Dictionary = {"bank": 0, "round": 1}) -> Dictionary:
 	if available_cards.size() <= 5:
 		var eval = evaluate_5_card_hand(available_cards)
-		var score = calculate_score(eval)
+		var score = calculate_score(eval, context) # Adicionado o context aqui
 		eval["score_data"] = score
 		return eval
 
@@ -221,7 +239,7 @@ static func find_best_hand(available_cards: Array) -> Dictionary:
 
 	for combo in combos:
 		var eval = evaluate_5_card_hand(combo)
-		var score = calculate_score(eval)
+		var score = calculate_score(eval, context) # Adicionado o context aqui
 		
 		if score["total"] > highest_score:
 			highest_score = score["total"]
