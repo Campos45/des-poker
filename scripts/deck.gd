@@ -26,6 +26,9 @@ var current_community_deck = []
 @onready var play_button = $PlayButton
 @onready var score_label = $ScoreLabel
 @onready var next_round_button = $NextRoundButton
+@onready var bank_label = $BankLabel 
+
+var global_bank = 0 # Adiciona a tua conta bancária!
 
 func _ready():
 	randomize()
@@ -36,7 +39,7 @@ func _ready():
 # Cria o Baralho Permanente do Jogador com as novas cartas Especiais
 func generate_master_player_deck():
 	master_player_deck.clear()
-	var math_specials = ["Fichas Pesadas", "Estrela Multiplicadora", "O Cilindro Par", "A Sinergia"]
+	var math_specials = ["Fichas Pesadas", "Estrela Multiplicadora", "O Cilindro Par", "A Sinergia", "Barris da Taverna", "A Solitária", "Dividendo Fixo", "A Mealheiro"]
 	
 	for suit in suits:
 		for rank in ranks:
@@ -123,8 +126,27 @@ func _on_play_button_pressed():
 	final_text += str(score2_data["chips"]) + " Fichas X " + str(score2_data["mult"]) + " Mult = " + str(score2_data["total"]) + "\n\n"
 	
 	# Soma final
+	# ...
+	# --- SOMA E PROCESSAMENTO DE EFEITOS SECUNDÁRIOS ---
 	var grand_total = score1_data["total"] + score2_data["total"]
-	final_text += "GRANDE TOTAL DA RONDA: " + str(grand_total) + " Pontos!"
+	final_text += "GRANDE TOTAL DA RONDA: " + str(grand_total) + " Pontos!\n\n"
+	
+	# 1. Somar Dinheiro das Cartas Económicas
+	var total_money = score1_data.get("money", 0) + score2_data.get("money", 0)
+	if total_money > 0:
+		global_bank += total_money
+		bank_label.text = "Pontuação Total: " + str(global_bank)
+		final_text += "🤑 Moedas Geradas no Banco: +" + str(total_money) + "\n"
+		
+	# 2. Executar a Destruição Permanente ("A Mealheiro")
+	var all_destroyed_cards = score1_data.get("destroy", []) + score2_data.get("destroy", [])
+	for bad_card in all_destroyed_cards:
+		# Procura a carta idêntica no Baralho Mestre do Jogador e apaga-a para todo o sempre
+		for m_card in master_player_deck:
+			if m_card.suit == bad_card.suit and m_card.rank == bad_card.rank and m_card.special_type == bad_card.special_type:
+				master_player_deck.erase(m_card)
+				final_text += "🔥 " + bad_card.rank + " de " + bad_card.suit + " (" + bad_card.special_type + ") foi DESTRUÍDA para sempre!\n"
+				break # Remove apenas a primeira cópia que encontrar
 	
 	score_label.text = final_text
 	

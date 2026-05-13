@@ -144,7 +144,10 @@ static func calculate_score(hand_data: Dictionary) -> Dictionary:
 	var even_cards_count = 0
 	var red_cards_count = 0
 	
-	# Conta cartas para sinergias globais
+	# --- NOVO: Variáveis de Efeitos Secundários (Economia/Destruição) ---
+	var money_earned = 0
+	var cards_to_destroy = []
+	
 	for c in all_played_cards:
 		var val = RANK_VALUES[c.rank]
 		if val % 2 == 0 and val <= 10: 
@@ -154,13 +157,14 @@ static func calculate_score(hand_data: Dictionary) -> Dictionary:
 	
 	for card in scoring_cards:
 		var card_val = RANK_VALUES[card.rank]
+		var numeric_value = card_val
 		
-		# Pontos da carta
-		if card_val > 10 and card_val < 14: total_chips += 10
-		elif card_val == 14: total_chips += 11
-		else: total_chips += card_val
+		# Calcular o valor real em Fichas/Moedas (Figuras valem 10, Ás 11)
+		if card_val > 10 and card_val < 14: numeric_value = 10
+		elif card_val == 14: numeric_value = 11
+		
+		total_chips += numeric_value
 			
-		# Efeitos Especiais das Cartas
 		if card.is_special:
 			total_mult += 1 
 			match card.special_type:
@@ -172,9 +176,33 @@ static func calculate_score(hand_data: Dictionary) -> Dictionary:
 					total_chips += (5 * even_cards_count)
 				"A Sinergia":
 					total_chips += (10 * red_cards_count)
-			
+				"Barris da Taverna":
+					total_mult += 15
+					total_chips -= 10
+				"A Solitária":
+					# Só ativa se o jogador tiver enviado exatamente UMA carta na jogada
+					if all_played_cards.size() == 1:
+						total_chips += 100
+				"Dividendo Fixo":
+					money_earned += 1
+				"A Mealheiro":
+					money_earned += numeric_value
+					cards_to_destroy.append(card) # Marca a carta para ser apagada do jogo!
+	
+	# Previne que uma carta má deixe as tuas fichas base negativas
+	if total_chips < 0:
+		total_chips = 0
+		
 	var final_score = total_chips * total_mult
-	return {"chips": total_chips, "mult": total_mult, "total": final_score}
+	
+	# O Dicionário de resposta agora leva mais informação vital
+	return {
+		"chips": total_chips, 
+		"mult": total_mult, 
+		"total": final_score, 
+		"money": money_earned, 
+		"destroy": cards_to_destroy
+	}
 
 static func level_up_hand(hand_name: String):
 	if hand_levels.has(hand_name):

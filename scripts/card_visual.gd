@@ -12,7 +12,11 @@ const SPECIAL_DESCRIPTIONS = {
 	"Fichas Pesadas": "Dá +30 Fichas base, independentemente do valor da carta.",
 	"Estrela Multiplicadora": "Dá +4 de Multiplicador.",
 	"O Cilindro Par": "+5 Fichas por cada carta Par (2, 4, 6, 8, 10) que enviares na mesma jogada.",
-	"A Sinergia": "+10 Fichas por cada outra carta vermelha na mão."
+	"A Sinergia": "+10 Fichas por cada outra carta vermelha na mão.",
+	"Barris da Taverna": "Fica Bêbada: dá +15 de Mult mas debita -10 Fichas.",
+	"A Solitária": "Dá +100 Fichas se for a ÚNICA carta a ser submetida na jogada.",
+	"Dividendo Fixo": "Gera +1 Moeda para a tua Pontuação Total assim que pontuar.",
+	"A Mealheiro": "Destrói-se para sempre ao ser jogada, mas deposita o seu valor em Moedas."
 }
 
 func setup_card(data):
