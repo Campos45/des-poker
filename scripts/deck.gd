@@ -102,20 +102,24 @@ func _on_play_button_pressed():
 		score_label.text = "Aviso: Seleciona pelo menos 1 carta!"
 		return
 		
+	
+	# ... código anterior ...
+	
 	var hand1_data = HandEvaluator.evaluate_5_card_hand(selected_cards)
 	var score1_data = HandEvaluator.calculate_score(hand1_data)
 	
-	var final_text = "Primeira Mão: " + hand1_data["name"] + "\n"
+	# Alterado para incluir o Nível
+	var final_text = "Primeira Mão: " + hand1_data["name"] + " (Nv " + str(HandEvaluator.hand_levels[hand1_data["name"]]) + ")\n"
 	final_text += str(score1_data["chips"]) + " Fichas X " + str(score1_data["mult"]) + " Mult = " + str(score1_data["total"]) + "\n\n"
 	
 	var hand2_data = HandEvaluator.find_best_hand(remaining_cards)
 	var score2_data = hand2_data["score_data"]
 	
-	final_text += "Segunda Mão (Auto): " + hand2_data["name"] + "\n"
+	# Alterado para incluir o Nível
+	final_text += "Segunda Mão (Auto): " + hand2_data["name"] + " (Nv " + str(HandEvaluator.hand_levels[hand2_data["name"]]) + ")\n"
 	final_text += str(score2_data["chips"]) + " Fichas X " + str(score2_data["mult"]) + " Mult = " + str(score2_data["total"]) + "\n\n"
 	
-	var grand_total = score1_data["total"] + score2_data["total"]
-	final_text += "GRANDE TOTAL DA RONDA: " + str(grand_total) + " Pontos!"
+	# ... resto da função igual ...
 	
 	score_label.text = final_text
 	

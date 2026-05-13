@@ -18,6 +18,31 @@ const HAND_BASE_STATS = {
 	"Um Par": {"chips": 10, "mult": 2},
 	"Carta Alta": {"chips": 5, "mult": 1}
 }
+
+# --- NOVO: Níveis atuais das mãos ---
+static var hand_levels = {
+	"Royal Flush": 1, "Straight Flush": 1, "Poker": 1,
+	"Full House": 1, "Flush": 1, "Sequência (Straight)": 1,
+	"Trio": 1, "Dois Pares": 1, "Um Par": 1, "Carta Alta": 1
+}
+
+# --- NOVO: A tua tabela de bónus por nível! ---
+const UPGRADE_SCALING = {
+	"Royal Flush": {"chips": 200, "mult": 15},
+	"Straight Flush": {"chips": 100, "mult": 8},
+	"Poker": {"chips": 50, "mult": 5},
+	"Full House": {"chips": 40, "mult": 4},
+	"Flush": {"chips": 30, "mult": 3},
+	"Sequência (Straight)": {"chips": 25, "mult": 3},
+	"Trio": {"chips": 20, "mult": 2},
+	"Dois Pares": {"chips": 15, "mult": 2},
+	"Um Par": {"chips": 10, "mult": 1},
+	"Carta Alta": {"chips": 5, "mult": 1}
+}
+
+
+
+
 static func evaluate_5_card_hand(cards: Array) -> Dictionary:
 	var values = []
 	var suits = []
@@ -120,16 +145,18 @@ static func evaluate_5_card_hand(cards: Array) -> Dictionary:
 					
 	return {"name": hand_name, "scoring_cards": scoring_cards}
 	
-# A nossa matemática agora só recebe o dicionário gerado em cima
 static func calculate_score(hand_data: Dictionary) -> Dictionary:
 	var hand_name = hand_data["name"]
 	var scoring_cards = hand_data["scoring_cards"]
 	
 	var stats = HAND_BASE_STATS[hand_name]
-	var total_chips = stats["chips"]
-	var total_mult = stats["mult"]
+	var level = hand_levels[hand_name]
+	var upgrade_bonus = UPGRADE_SCALING[hand_name]
 	
-	# Só passamos pelas cartas que de facto pontuam!
+	# Fórmula mágica: Base + (Bónus * (Nível - 1))
+	var total_chips = stats["chips"] + (upgrade_bonus["chips"] * (level - 1))
+	var total_mult = stats["mult"] + (upgrade_bonus["mult"] * (level - 1))
+	
 	for card in scoring_cards:
 		var card_val = RANK_VALUES[card.rank]
 		
@@ -143,7 +170,10 @@ static func calculate_score(hand_data: Dictionary) -> Dictionary:
 	var final_score = total_chips * total_mult
 	return {"chips": total_chips, "mult": total_mult, "total": final_score}
 
-
+# FUNÇÃO NOVA: A Loja vai usar isto para subir as mãos de nível!
+static func level_up_hand(hand_name: String):
+	if hand_levels.has(hand_name):
+		hand_levels[hand_name] += 1
 # --- MOTOR DE INTELIGÊNCIA ARTIFICIAL (SEGUNDA MÃO) ---
 
 # 1. Função que o jogo vai chamar para descobrir a melhor mão
