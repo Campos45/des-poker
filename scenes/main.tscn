@@ -20,9 +20,9 @@ text = "Jogar Mão"
 
 [node name="ScoreLabel" type="Label" parent="." unique_id=441315085]
 offset_left = 858.0
-offset_top = 20.0
+offset_top = 41.0
 offset_right = 959.0
-offset_bottom = 43.0
+offset_bottom = 64.0
 theme_override_colors/font_color = Color(9.62615e-08, 0.6376515, 0.6396126, 1)
 text = "Pontuação: 0"
 
@@ -42,6 +42,13 @@ offset_top = 575.0
 offset_right = 1033.0
 offset_bottom = 606.0
 text = "Próxima Ronda"
+
+[node name="BankLabel" type="Label" parent="." unique_id=1775903302]
+offset_left = 855.0
+offset_top = 20.0
+offset_right = 946.0
+offset_bottom = 43.0
+text = "Pontuação Total: 0"
 
 [connection signal="pressed" from="PlayButton" to="." method="_on_play_button_pressed"]
 [connection signal="pressed" from="NextRoundButton" to="." method="_on_next_round_button_pressed"]

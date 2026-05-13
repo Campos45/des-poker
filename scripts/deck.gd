@@ -22,6 +22,10 @@ var deck = []
 @onready var play_button = $PlayButton
 @onready var score_label = $ScoreLabel
 @onready var next_round_button = $NextRoundButton
+@onready var bank_label = $BankLabel # NOVA LINHA PARA A INTERFACE
+
+var global_bank = 0 # NOVA VARIÁVEL: Guarda o total acumulado do jogo inteiro
+
 
 func _ready():
 	randomize()
@@ -99,6 +103,10 @@ func _on_play_button_pressed():
 	final_text += "GRANDE TOTAL DA RONDA: " + str(grand_total) + " Pontos!"
 	
 	score_label.text = final_text
+	
+	# --- DEPOSITAR NO BANCO GLOBAL ---
+	global_bank += grand_total
+	bank_label.text = "Banco Global: " + str(global_bank)
 	
 	# Troca os botões
 	play_button.hide()
