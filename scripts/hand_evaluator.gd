@@ -40,16 +40,58 @@ const UPGRADE_SCALING = {
 static func evaluate_5_card_hand(cards: Array) -> Dictionary:
 	var values = []
 	var suits = []
+	var normal_values = []
+	var joker_count = 0
 	
 	for card in cards:
 		values.append(RANK_VALUES[card.rank])
 		suits.append(card.suit)
+		if card.is_special and card.special_type == "O Joker Disfarçado":
+			joker_count += 1
+		else:
+			normal_values.append(RANK_VALUES[card.rank])
 		
 	values.sort()
+	normal_values.sort()
 	var num_cards = cards.size() 
 	
 	var is_flush = false
 	var is_straight = false
+	
+	if num_cards == 5:
+		is_flush = true
+		var target_suit = ""
+		for card in cards:
+			if card.is_special and card.special_type == "Carta Fantasma": continue 
+			if target_suit == "": target_suit = card.suit
+			elif card.suit != target_suit:
+				is_flush = false
+				break
+				
+		if joker_count > 0 and normal_values.size() > 0:
+			var unique_vals = []
+			for v in normal_values:
+				if not unique_vals.has(v): unique_vals.append(v)
+			
+			if unique_vals.size() == normal_values.size():
+				var max_v = normal_values.max()
+				var min_v = normal_values.min()
+				if max_v - min_v <= 4:
+					is_straight = true
+				elif normal_values.has(14):
+					var low_straight = true
+					for v in normal_values:
+						if v != 14 and v > 5: low_straight = false
+					if low_straight: is_straight = true
+		else:
+			is_straight = true
+			for i in range(1, 5):
+				if values[i] != values[i-1] + 1:
+					if i == 4 and values[4] == 14 and values[0] == 2 and values[1] == 3 and values[2] == 4 and values[3] == 5:
+						is_straight = true
+					else:
+						is_straight = false
+						break
 	
 	if num_cards == 5:
 		is_flush = true
@@ -163,26 +205,32 @@ static func calculate_score(hand_data: Dictionary, context: Dictionary = {"bank"
 
 	# 1º Loop: Encontrar Absorvedoras e roubar Fichas aos vizinhos!
 	for i in range(all_played_cards.size()):
-		var card = all_played_cards[i]
-		if card.is_special and card.special_type == "Absorvedora":
-			var left_index = i - 1
-			var right_index = i + 1
-			# A regra de dar a volta (Wrap-around)
-			if left_index < 0: left_index = all_played_cards.size() - 1
-			if right_index >= all_played_cards.size(): right_index = 0
-			
-			# Calcula e guarda o que roubou aos vizinhos
-			var l_val = RANK_VALUES[all_played_cards[left_index].rank]
-			var r_val = RANK_VALUES[all_played_cards[right_index].rank]
-			if l_val > 10 and l_val < 14: l_val = 10
-			elif l_val == 14: l_val = 11
-			if r_val > 10 and r_val < 14: r_val = 10
-			elif r_val == 14: r_val = 11
-			
-			# Marca os vizinhos para terem 0 fichas e absorve (x1.5)
-			stolen_chips[left_index] = -l_val
-			stolen_chips[right_index] = -r_val
-			stolen_chips[i] += int((l_val + r_val) * 1.5)
+		var card = all_played_cards[i] # <-- ESTA É A LINHA QUE FALTAVA
+		var card_val = RANK_VALUES[card.rank]
+		if card_val > 10 and card_val < 14: card_val = 10
+		elif card_val == 14: card_val = 11
+
+		if card.is_special:
+			if card.special_type == "Absorvedora":
+				var left_index = i - 1
+				var right_index = i + 1
+				if left_index < 0: left_index = all_played_cards.size() - 1
+				if right_index >= all_played_cards.size(): right_index = 0
+				
+				var l_val = RANK_VALUES[all_played_cards[left_index].rank]
+				var r_val = RANK_VALUES[all_played_cards[right_index].rank]
+				if l_val > 10 and l_val < 14: l_val = 10
+				elif l_val == 14: l_val = 11
+				if r_val > 10 and r_val < 14: r_val = 10
+				elif r_val == 14: r_val = 11
+				
+				stolen_chips[left_index] = -l_val
+				stolen_chips[right_index] = -r_val
+				stolen_chips[i] += int((l_val + r_val) * 1.5)
+			elif card.special_type == "Placa de Circuito":
+				var right_index = i + 1
+				if right_index >= all_played_cards.size(): right_index = 0
+				stolen_chips[right_index] += card_val
 
 	# 2º Loop: Cálculo Normal e outras Especiais
 	for i in range(scoring_cards.size()):
@@ -250,6 +298,19 @@ static func calculate_score(hand_data: Dictionary, context: Dictionary = {"bank"
 					var left_i = real_index - 1
 					if left_i < 0: left_i = all_played_cards.size() - 1
 					cards_to_destroy.append(all_played_cards[left_i])
+				"Ação Aristocrata":
+					if context.has("shelf"):
+						var special_count = 0
+						for unplayed in context["shelf"]:
+							if unplayed.is_special: special_count += 1
+						money_earned += special_count
+				"Memória Cache":
+					if real_index > 0:
+						var prev_card = all_played_cards[real_index - 1]
+						var prev_val = RANK_VALUES[prev_card.rank]
+						if prev_val > 10 and prev_val < 14: prev_val = 10
+						elif prev_val == 14: prev_val = 11
+						total_chips += prev_val
 	
 	if total_chips < 0: total_chips = 0
 	
@@ -273,11 +334,10 @@ static func calculate_score(hand_data: Dictionary, context: Dictionary = {"bank"
 static func level_up_hand(hand_name: String):
 	if hand_levels.has(hand_name):
 		hand_levels[hand_name] += 1
-
-static func find_best_hand(available_cards: Array, context: Dictionary = {"bank": 0, "round": 1}) -> Dictionary:
+static func find_best_hand(available_cards: Array, context: Dictionary = {"bank": 0, "round": 1, "community": [], "shelf": []}) -> Dictionary:
 	if available_cards.size() <= 5:
 		var eval = evaluate_5_card_hand(available_cards)
-		var score = calculate_score(eval, context) # Adicionado o context aqui
+		var score = calculate_score(eval, context)
 		eval["score_data"] = score
 		return eval
 
@@ -287,7 +347,7 @@ static func find_best_hand(available_cards: Array, context: Dictionary = {"bank"
 
 	for combo in combos:
 		var eval = evaluate_5_card_hand(combo)
-		var score = calculate_score(eval, context) # Adicionado o context aqui
+		var score = calculate_score(eval, context) 
 		
 		if score["total"] > highest_score:
 			highest_score = score["total"]
@@ -295,7 +355,8 @@ static func find_best_hand(available_cards: Array, context: Dictionary = {"bank"
 			best_hand = eval
 
 	return best_hand
-
+	
+	
 static func get_combinations(arr: Array, k: int) -> Array:
 	var result = []
 	_combine(arr, k, 0, [], result)

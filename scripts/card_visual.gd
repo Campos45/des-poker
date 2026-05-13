@@ -2,6 +2,7 @@ extends Control
 
 var card_data = null
 var is_selected = false
+var glitch_timer = 0.0
 
 @onready var background = $ColorRect
 @onready var text_label = $Label
@@ -33,7 +34,13 @@ const SPECIAL_DESCRIPTIONS = {
 	"Sacrifício Sangrento": "Ganha +5 Mult, mas DESTRÓI permanentemente a carta à sua esquerda na jogada.",
 	"Absorvedora": "Rouba as Fichas das cartas à sua esquerda e direita na jogada e concentra tudo nela (x1.5).",
 	"Carta Fantasma": "Ilusão: Conta sempre como o naipe perfeito para fechar Flushes.",
-	"Overclock Extremo": "Dobra todo o Multiplicador da mão, mas DESTRÓI TODAS as tuas cartas selecionadas!"
+	"Overclock Extremo": "Dobra todo o Multiplicador da mão, mas DESTRÓI TODAS as tuas cartas selecionadas!",
+	
+	"Ação Aristocrata": "Quando jogada, dá +1 Moeda por cada outra carta especial que deixaste na prateleira.",
+	"Memória Cache": "Repete a quantidade exata de Fichas da última carta que selecionaste antes desta.",
+	"Placa de Circuito": "Partilha as suas Fichas base como bónus extra para a carta à sua direita.",
+	"O Bug (Glitch)": "Flutua de valor a cada 2 segundos. Tranca no valor que tiver quando clicares Jogar.",
+	"O Joker Disfarçado": "Mestre do disfarce: Preenche os buracos de uma Sequência (Straight) incompleta."
 }
 
 func setup_card(data):
@@ -62,12 +69,27 @@ func setup_card(data):
 	else:
 		text_label.add_theme_color_override("font_color", Color(0, 0, 0))
 
+
+func _process(delta):
+	if card_data and card_data.is_special and card_data.special_type == "O Bug (Glitch)" and not is_selected:
+		glitch_timer += delta
+		if glitch_timer >= 2.0:
+			glitch_timer = 0.0
+			var suits = ["Copas", "Ouros", "Paus", "Espadas"]
+			var ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "Valete", "Dama", "Rei", "As"]
+			card_data.suit = suits[randi() % suits.size()]
+			card_data.rank = ranks[randi() % ranks.size()]
+			setup_card(card_data)
+
+
 func _on_button_pressed():
 	toggle_selection()
 
 func toggle_selection():
 	is_selected = !is_selected
 	if is_selected:
-		position.y -= 20
+		background.position.y -= 20
+		text_label.position.y -= 20
+		if card_data: card_data.selection_time = Time.get_ticks_msec()
 	else:
 		position.y += 20

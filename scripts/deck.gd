@@ -7,6 +7,7 @@ class Card:
 	var rank: String
 	var is_special: bool
 	var special_type: String 
+	var selection_time: int = 0
 	
 	func _init(s: String, r: String, special: bool, type: String = ""):
 		suit = s
@@ -46,7 +47,8 @@ func generate_master_player_deck():
 		"Barris da Taverna", "A Solitária", "Dividendo Fixo", "A Mealheiro", 
 		"Fundo de Emergência", "Veterana de Serviço", "Overclock", "Gato Preto",
 		"Imposto de Retenção", "Blue Chip", "Sensor BLE", "Colheita Farta",
-		"Sacrifício Sangrento", "Absorvedora", "Carta Fantasma", "Overclock Extremo"
+		"Sacrifício Sangrento", "Absorvedora", "Carta Fantasma", "Overclock Extremo",
+		"Ação Aristocrata", "Memória Cache", "Placa de Circuito", "O Bug (Glitch)", "O Joker Disfarçado"
 	]
 	
 	
@@ -120,8 +122,10 @@ func _on_play_button_pressed():
 		score_label.text = "Aviso: Seleciona pelo menos 1 carta!"
 		return
 		
-	# O pacote com as informações vitais do jogo
-	var game_context = {"bank": global_bank, "round": current_round, "community": current_community_deck}
+	# Ordena pelo clique e adiciona a prateleira (shelf) ao contexto
+	selected_cards.sort_custom(func(a, b): return a.selection_time < b.selection_time)
+	var game_context = {"bank": global_bank, "round": current_round, "community": current_community_deck, "shelf": remaining_cards}	
+		
 	
 	var hand1_data = HandEvaluator.evaluate_5_card_hand(selected_cards)
 	var score1_data = HandEvaluator.calculate_score(hand1_data, game_context) 
