@@ -29,13 +29,29 @@ var current_community_deck = []
 @onready var next_round_button = $NextRoundButton
 @onready var bank_label = $BankLabel 
 
+@onready var shop_button = Button.new()
+@onready var restart_button = Button.new() # <-- ADICIONA ESTA LINHA
+const SHOP_SCENE = preload("res://scenes/shop.tscn")
+
 var global_bank = 0 
 var current_round = 1 
 
 
 func _ready():
 	randomize()
-	next_round_button.hide() 
+	next_round_button.hide()
+	shop_button.text = "Abrir Loja"
+	shop_button.position = Vector2(20, 60)
+	shop_button.pressed.connect(_on_shop_button_pressed)
+	add_child(shop_button) 
+	
+	# --- ADICIONA ESTE BLOCO ---
+	restart_button.text = "Desistir (Restart)"
+	restart_button.position = Vector2(20, 20)
+	restart_button.pressed.connect(_on_force_restart_pressed)
+	add_child(restart_button)
+	# ---------------------------
+	
 	generate_master_player_deck() 
 	start_new_round()
 
@@ -135,7 +151,7 @@ func _on_play_button_pressed():
 	final_text += str(score1_data["chips"]) + " Fichas X " + str(score1_data["mult"]) + " Mult = " + str(score1_data["total"]) + "\n\n"
 	
 	# IA avalia a 2ª Mão
-	var hand2_data = HandEvaluator.find_best_hand(remaining_cards)
+	var hand2_data = HandEvaluator.find_best_hand(remaining_cards, game_context)
 	var score2_data = hand2_data["score_data"]
 	
 	final_text += "Segunda Mão (Auto): " + hand2_data["name"] + " (Nv " + str(HandEvaluator.hand_levels[hand2_data["name"]]) + ")\n"
@@ -206,3 +222,12 @@ func _on_next_round_button_pressed():
 	
 	current_round += 1 # Adiciona isto para as Veteranas de Serviço ficarem mais fortes!
 	start_new_round()
+
+
+func _on_shop_button_pressed():
+	var shop_instance = SHOP_SCENE.instantiate()
+	get_tree().root.add_child(shop_instance) # Adiciona a loja por cima do jogo
+
+# --- ADICIONA ESTA FUNÇÃO NO FINAL DO FICHEIRO ---
+func _on_force_restart_pressed():
+	get_tree().change_scene_to_file("res://scenes/game_over.tscn")

@@ -1,0 +1,90 @@
+[gd_scene format=3 uid="uid://shop_scene"]
+
+[ext_resource type="Script" uid="uid://shop_script" path="res://scripts/shop.gd" id="1_script"]
+
+[node name="Shop" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_script")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.1, 0.1, 0.2, 0.9)
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.0
+offset_top = 30.0
+offset_right = 100.0
+offset_bottom = 70.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 24
+text = "LOJA DE UPGRADES"
+horizontal_alignment = 1
+
+[node name="BankLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -150.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 50.0
+grow_horizontal = 0
+text = "Moedas: 0"
+horizontal_alignment = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -150.0
+offset_right = 200.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PairButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Upgrade 'Um Par' (Custa 2)"
+
+[node name="StraightButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Upgrade 'Sequência' (Custa 3)"
+
+[node name="FlushButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Upgrade 'Flush' (Custa 4)"
+
+[node name="BackButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -50.0
+offset_top = -60.0
+offset_right = 50.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Voltar ao Jogo"
+
+[connection signal="pressed" from="VBoxContainer/PairButton" to="." method="_on_pair_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/StraightButton" to="." method="_on_straight_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/FlushButton" to="." method="_on_flush_button_pressed"]
+[connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]
