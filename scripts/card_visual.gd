@@ -28,7 +28,12 @@ const SPECIAL_DESCRIPTIONS = {
 	"Imposto de Retenção": "Reduz o multiplicador em -1, mas gera +3 Moedas.",
 	"Blue Chip": "Custa 2 Moedas do teu banco. Se pagares, TRIPLICA o multiplicador base.",
 	"Sensor BLE": "Ganha +1 de Mult por cada carta do seu naipe na Mesa Comunitária.",
-	"Colheita Farta": "Se pontuar num Full House, dá 3 Moedas e gera 2 Cartas Especiais novas no teu Baralho."
+	"Colheita Farta": "Se pontuar num Full House, dá 3 Moedas e gera 2 Cartas Especiais novas no teu Baralho.",
+	
+	"Sacrifício Sangrento": "Ganha +5 Mult, mas DESTRÓI permanentemente a carta à sua esquerda na jogada.",
+	"Absorvedora": "Rouba as Fichas das cartas à sua esquerda e direita na jogada e concentra tudo nela (x1.5).",
+	"Carta Fantasma": "Ilusão: Conta sempre como o naipe perfeito para fechar Flushes.",
+	"Overclock Extremo": "Dobra todo o Multiplicador da mão, mas DESTRÓI TODAS as tuas cartas selecionadas!"
 }
 
 func setup_card(data):

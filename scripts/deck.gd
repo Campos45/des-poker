@@ -45,7 +45,8 @@ func generate_master_player_deck():
 		"Fichas Pesadas", "Estrela Multiplicadora", "O Cilindro Par", "A Sinergia", 
 		"Barris da Taverna", "A Solitária", "Dividendo Fixo", "A Mealheiro", 
 		"Fundo de Emergência", "Veterana de Serviço", "Overclock", "Gato Preto",
-		"Imposto de Retenção", "Blue Chip", "Sensor BLE", "Colheita Farta"
+		"Imposto de Retenção", "Blue Chip", "Sensor BLE", "Colheita Farta",
+		"Sacrifício Sangrento", "Absorvedora", "Carta Fantasma", "Overclock Extremo"
 	]
 	
 	

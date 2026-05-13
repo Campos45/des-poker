@@ -37,7 +37,6 @@ const UPGRADE_SCALING = {
 	"Um Par": {"chips": 10, "mult": 1},
 	"Carta Alta": {"chips": 5, "mult": 1}
 }
-
 static func evaluate_5_card_hand(cards: Array) -> Dictionary:
 	var values = []
 	var suits = []
@@ -54,9 +53,14 @@ static func evaluate_5_card_hand(cards: Array) -> Dictionary:
 	
 	if num_cards == 5:
 		is_flush = true
-		var first_suit = suits[0]
-		for s in suits:
-			if s != first_suit:
+		var target_suit = ""
+		# Nova lógica de Flush: A Carta Fantasma ignora a regra do naipe!
+		for card in cards:
+			if card.is_special and card.special_type == "Carta Fantasma":
+				continue 
+			if target_suit == "":
+				target_suit = card.suit
+			elif card.suit != target_suit:
 				is_flush = false
 				break
 				
@@ -87,10 +91,8 @@ static func evaluate_5_card_hand(cards: Array) -> Dictionary:
 	var scoring_cards = []
 	
 	if is_straight and is_flush:
-		if values[4] == 14 and values[3] == 13:
-			hand_name = "Royal Flush"
-		else:
-			hand_name = "Straight Flush"
+		if values[4] == 14 and values[3] == 13: hand_name = "Royal Flush"
+		else: hand_name = "Straight Flush"
 		scoring_cards = cards.duplicate()
 	elif quad_value != -1:
 		hand_name = "Poker"
@@ -126,10 +128,8 @@ static func evaluate_5_card_hand(cards: Array) -> Dictionary:
 					scoring_cards.append(c)
 					break 
 					
-	# Retornamos a mão, as cartas que pontuam, e todas as que foram jogadas
 	return {"name": hand_name, "scoring_cards": scoring_cards, "all_played_cards": cards}
 
-# Adicionámos "context" para a função saber o dinheiro e a ronda
 static func calculate_score(hand_data: Dictionary, context: Dictionary = {"bank": 0, "round": 1, "community": []}) -> Dictionary:
 	var hand_name = hand_data["name"]
 	var scoring_cards = hand_data["scoring_cards"]
@@ -142,28 +142,63 @@ static func calculate_score(hand_data: Dictionary, context: Dictionary = {"bank"
 	var total_chips = stats["chips"] + (upgrade_bonus["chips"] * (level - 1))
 	var total_mult = stats["mult"] + (upgrade_bonus["mult"] * (level - 1))
 	
-	var even_cards_count = 0
-	var red_cards_count = 0
 	var money_earned = 0
 	var cards_to_destroy = []
-	var cards_to_create = 0 # NOVA: Quantas cartas novas vamos gerar?
+	var cards_to_create = 0
 	var has_black_cat = false
+	var double_extreme_mult = false
 	
+	# Contagens passivas
+	var even_cards_count = 0
+	var red_cards_count = 0
 	for c in all_played_cards:
 		var val = RANK_VALUES[c.rank]
-		if val % 2 == 0 and val <= 10: 
-			even_cards_count += 1
-		if c.suit == "Copas" or c.suit == "Ouros": 
-			red_cards_count += 1
+		if val % 2 == 0 and val <= 10: even_cards_count += 1
+		if c.suit == "Copas" or c.suit == "Ouros": red_cards_count += 1
 	
-	for card in scoring_cards:
+	# Dicionário temporário para roubo de Fichas (Absorvedora)
+	var stolen_chips = {}
+	for i in range(all_played_cards.size()):
+		stolen_chips[i] = 0
+
+	# 1º Loop: Encontrar Absorvedoras e roubar Fichas aos vizinhos!
+	for i in range(all_played_cards.size()):
+		var card = all_played_cards[i]
+		if card.is_special and card.special_type == "Absorvedora":
+			var left_index = i - 1
+			var right_index = i + 1
+			# A regra de dar a volta (Wrap-around)
+			if left_index < 0: left_index = all_played_cards.size() - 1
+			if right_index >= all_played_cards.size(): right_index = 0
+			
+			# Calcula e guarda o que roubou aos vizinhos
+			var l_val = RANK_VALUES[all_played_cards[left_index].rank]
+			var r_val = RANK_VALUES[all_played_cards[right_index].rank]
+			if l_val > 10 and l_val < 14: l_val = 10
+			elif l_val == 14: l_val = 11
+			if r_val > 10 and r_val < 14: r_val = 10
+			elif r_val == 14: r_val = 11
+			
+			# Marca os vizinhos para terem 0 fichas e absorve (x1.5)
+			stolen_chips[left_index] = -l_val
+			stolen_chips[right_index] = -r_val
+			stolen_chips[i] += int((l_val + r_val) * 1.5)
+
+	# 2º Loop: Cálculo Normal e outras Especiais
+	for i in range(scoring_cards.size()):
+		var card = scoring_cards[i]
+		
+		# Encontra a posição real desta carta na mão jogada
+		var real_index = all_played_cards.find(card)
+		
 		var card_val = RANK_VALUES[card.rank]
 		var numeric_value = card_val
-		
 		if card_val > 10 and card_val < 14: numeric_value = 10
 		elif card_val == 14: numeric_value = 11
 		
-		total_chips += numeric_value
+		# Aplica os roubos da Absorvedora (se foi roubado fica a 0)
+		var final_card_chips = max(0, numeric_value + stolen_chips.get(real_index, 0))
+		total_chips += final_card_chips
 			
 		if card.is_special:
 			total_mult += 1 
@@ -188,36 +223,44 @@ static func calculate_score(hand_data: Dictionary, context: Dictionary = {"bank"
 					total_chips += numeric_value 
 					if randf() <= 0.20: cards_to_destroy.append(card)
 				"Gato Preto": has_black_cat = true
-				
-				# --- AS NOVAS CARTAS ---
 				"Imposto de Retenção":
-					total_mult = max(1, total_mult - 1) # Impede que o multiplicador vá abaixo de 1
+					total_mult = max(1, total_mult - 1)
 					money_earned += 3
 				"Blue Chip":
 					if context["bank"] >= 2:
-						money_earned -= 2 # Gasta 2 moedas
-						total_mult *= 3   # Triplica!
+						money_earned -= 2 
+						total_mult *= 3   
 				"Sensor BLE":
 					var matches = 0
-					# Lê as cartas da mesa comunitária
 					if context.has("community"):
 						for comm_card in context["community"]:
-							if comm_card.suit == card.suit:
-								matches += 1
+							if comm_card.suit == card.suit: matches += 1
 					total_mult += matches
 				"Colheita Farta":
 					if hand_name == "Full House":
 						money_earned += 3
-						cards_to_create += 2 # Dá ordem para gerar 2 cartas!
+						cards_to_create += 2
+				
+				# --- NOVAS DESTE SPRINT ---
+				"Overclock Extremo":
+					double_extreme_mult = true
+					for c in all_played_cards: cards_to_destroy.append(c)
+				"Sacrifício Sangrento":
+					total_mult += 5
+					var left_i = real_index - 1
+					if left_i < 0: left_i = all_played_cards.size() - 1
+					cards_to_destroy.append(all_played_cards[left_i])
 	
 	if total_chips < 0: total_chips = 0
+	
+	if double_extreme_mult: total_mult *= 2
+	
 	var final_score = total_chips * total_mult
 	
 	if has_black_cat:
 		if randf() <= 0.50: final_score *= 2 
 		else: final_score /= 2 
 	
-	# Retornamos também as "cards_to_create"
 	return {
 		"chips": total_chips, 
 		"mult": total_mult, 
@@ -225,7 +268,7 @@ static func calculate_score(hand_data: Dictionary, context: Dictionary = {"bank"
 		"money": money_earned, 
 		"destroy": cards_to_destroy,
 		"create": cards_to_create 
-	}
+	}		
 	
 static func level_up_hand(hand_name: String):
 	if hand_levels.has(hand_name):
