@@ -2,43 +2,33 @@
 
 [ext_resource type="Script" uid="uid://c7v5e5m8xqcrv" path="res://scripts/card_visual.gd" id="1_4xisq"]
 
-[node name="CardVisual" type="Control" unique_id=1325700549]
+[node name="CardVisual" type="Control"]
 custom_minimum_size = Vector2(100, 150)
 layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 171.0
-offset_top = -12.0
-offset_right = 171.0
-offset_bottom = -12.0
-grow_horizontal = 2
-grow_vertical = 2
+anchors_preset = 0
+offset_right = 100.0
+offset_bottom = 150.0
 script = ExtResource("1_4xisq")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=915354457]
+[node name="ColorRect" type="ColorRect" parent="."]
 layout_mode = 0
-offset_left = 4.0
-offset_top = 491.0
-offset_right = 104.0
-offset_bottom = 641.0
+offset_right = 100.0
+offset_bottom = 150.0
 mouse_filter = 2
 
-[node name="Label" type="Label" parent="." unique_id=1465066246]
+[node name="Label" type="Label" parent="."]
 layout_mode = 0
-offset_left = 20.0
-offset_top = 531.0
-offset_right = 82.0
-offset_bottom = 554.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 90.0
+offset_bottom = 140.0
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "A Copas"
 
-[node name="Button" type="Button" parent="." unique_id=1488830217]
+[node name="Button" type="Button" parent="."]
 layout_mode = 0
-offset_left = 4.0
-offset_top = 491.0
-offset_right = 104.0
-offset_bottom = 641.0
+offset_right = 100.0
+offset_bottom = 150.0
 flat = true
 
 [connection signal="pressed" from="Button" to="." method="_on_button_pressed"]
